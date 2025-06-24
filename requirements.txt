@@ -1,0 +1,7 @@
+zmq==0.0.0
+matplotlib==3.10.3
+numpy==2.3.0
+tqdm==4.66.4
+scikit-image==0.25.2
+multiprocess==0.70.16
+git+https://github.com/dotTHzTAG/pydotthz.git@main#egg=pydotthz
