@@ -1,5 +1,23 @@
-# pyproject.toml
 [build-system]
-# XXX: If your project needs other packages to build properly, add them to this list.
-requires = ["setuptools >= 42.0.0"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[tools.setuptools]
+packages = ["thz_deconvolution"]
+
+[project]
+name = "thz_deconvolution"
+version = "1.0.0"
+authors = [{ name = "Arnaud Demion", email = "arnaud.demion@hevs.ch" }]
+description = "This Python Package is designed for advanced signal processing in THz time-domain spectroscopy."
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = ["numpy", "scipy", "matplotlib", "zmq", "tqdm", "pydotthz"]
+[project.urls]
+"Homepage" = "https://github.com/Arnwald/thz_deconvolution"
+"Bug Tracker" = "https://github.com/Arnwald/thz_deconvolution/issues"

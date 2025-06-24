@@ -13,6 +13,7 @@ setup(
         'scipy',
         'matplotlib',
         'zmq',
-        'tqdm'
+        'tqdm',
+        'pydotthz'
     ]
 )

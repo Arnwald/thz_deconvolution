@@ -1,8 +1,0 @@
-README.md
-pyproject.toml
-setup.py
-src/thz_deconvolution.egg-info/PKG-INFO
-src/thz_deconvolution.egg-info/SOURCES.txt
-src/thz_deconvolution.egg-info/dependency_links.txt
-src/thz_deconvolution.egg-info/requires.txt
-src/thz_deconvolution.egg-info/top_level.txt

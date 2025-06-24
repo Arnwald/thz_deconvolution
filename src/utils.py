@@ -18,6 +18,31 @@ import math
 
 # Create a 2D PSF from 2x1D PSFs
 def create_psf_2d(psf_x, psf_y, x, y, plot=False):
+    """
+    Create a 2D Point Spread Function (PSF) from 1D PSFs along x and y axes.
+
+    Parameters
+    ----------
+    psf_x : array_like
+        1D PSF along the x-axis.
+    psf_y : array_like
+        1D PSF along the y-axis.
+    x : array_like
+        x-axis positions.
+    y : array_like
+        y-axis positions.
+    plot : bool, optional
+        If True, plots the 2D PSF. Default is False.
+
+    Returns
+    -------
+    X : ndarray
+        Meshgrid of x-axis positions.
+    Y : ndarray
+        Meshgrid of y-axis positions.
+    psf_2d : ndarray
+        2D PSF created from the input 1D PSFs.
+    """
     x_max = math.floor(np.max(x))
     y_max = math.floor(np.max(y))
     dx = x[1] - x[0]
@@ -80,6 +105,23 @@ def create_psf_2d(psf_x, psf_y, x, y, plot=False):
 # from skimage import restoration
 # deconvolved = restoration.richardson_lucy(image, PSF, iterations=100)
 def richardson_lucy(d, psf, num_iter):
+    """
+    Perform Richardson-Lucy deconvolution on input data.
+
+    Parameters
+    ----------
+    d : ndarray
+        Input data to be deconvolved.
+    psf : ndarray
+        Point Spread Function (PSF) used for deconvolution.
+    num_iter : int
+        Number of iterations for the deconvolution process.
+
+    Returns
+    -------
+    ndarray
+        Deconvolved data.
+    """
     # Padding the data to avoid edge effects
     pad = int(psf.shape[0] / 8)
     d = np.pad(d, pad, 'minimum')
@@ -115,10 +157,42 @@ def richardson_lucy_unclipped(d, psf, num_iter):
 
 # Blackman window
 def blackman_func(n, M):
+    """
+    Compute the Blackman window function.
+
+    Parameters
+    ----------
+    n : array_like
+        Input array.
+    M : float
+        Window length.
+
+    Returns
+    -------
+    array_like
+        Blackman window values.
+    """
     return 0.42 - 0.5 * np.cos(2 * np.pi * n / M) + 0.08 * np.cos(4 * np.pi * n / M)
 
 # Reproduction of the toptica window function
 def toptica_window(t, start=1, end=7):
+    """
+    Apply a Toptica window function to the input time array.
+
+    Parameters
+    ----------
+    t : array_like
+        Time array.
+    start : float, optional
+        Start time for the window. Default is 1.
+    end : float, optional
+        End time for the window. Default is 7.
+
+    Returns
+    -------
+    ndarray
+        Windowed time array.
+    """
     window = np.ones(t.shape)
     a = t[t <= (t[0] + start)]
     b = t[t >= (t[-1] - end)]
@@ -130,6 +204,25 @@ def toptica_window(t, start=1, end=7):
 
 # Zero-padding function to extend the time array
 def zero_padding(time, pulse, df_padded=0.01):
+    """
+    Apply zero-padding to a signal to achieve a desired frequency resolution.
+
+    Parameters
+    ----------
+    time : array_like
+        Time array of the signal.
+    pulse : array_like
+        Signal data.
+    df_padded : float, optional
+        Desired frequency resolution. Default is 0.01.
+
+    Returns
+    -------
+    extended_time : ndarray
+        Extended time array after zero-padding.
+    padded_pulse : ndarray
+        Zero-padded signal.
+    """
     # Calculate the total time span of the original data
     T = time[-1] - time[0]
 
@@ -158,6 +251,33 @@ def zero_padding(time, pulse, df_padded=0.01):
 
 
 def get_fft(t, p, df=0.01, window_start=1, window_end=7, return_td=False):
+    """
+    Compute the FFT of a signal with optional windowing and zero-padding.
+
+    Parameters
+    ----------
+    t : array_like
+        Time array of the signal.
+    p : array_like
+        Signal data.
+    df : float, optional
+        Desired frequency resolution. Default is 0.01.
+    window_start : float, optional
+        Start time for the window. Default is 1.
+    window_end : float, optional
+        End time for the window. Default is 7.
+    return_td : bool, optional
+        If True, returns time-domain data along with FFT. Default is False.
+
+    Returns
+    -------
+    f : ndarray
+        Frequency array.
+    a : ndarray
+        Amplitude spectrum.
+    arg : ndarray
+        Phase spectrum.
+    """
     t = np.array(t)
     p = np.array(p) * toptica_window(t, window_start, window_end)
     t, p = zero_padding(t, p, df_padded=df)
@@ -203,6 +323,23 @@ def extract_substring(text, start_str, end_str):
 
 # Error function
 def error_f(x, x0, w):
+    """
+    Compute the error function for fitting purposes.
+
+    Parameters
+    ----------
+    x : array_like
+        Input data points.
+    x0 : float
+        Center of the error function.
+    w : float
+        Width parameter of the error function.
+
+    Returns
+    -------
+    ndarray
+        Computed error function values.
+    """
     return (1 + scipy.special.erf(math.sqrt(2) * (x - np.array(x0)) / w)) / 2
 
 # Gaussian function
@@ -211,6 +348,21 @@ def gaussian(x, x0, w):
 
 # Expected beam width function
 def beam_w(freq, a):
+    """
+    Compute the beam width as a function of frequency.
+
+    Parameters
+    ----------
+    freq : array_like
+        Frequencies at which to compute the beam width.
+    a : float
+        Scaling factor for the beam width.
+
+    Returns
+    -------
+    ndarray
+        Beam width values corresponding to the input frequencies.
+    """
     return a / np.array(freq)
 
 # Kaiser windowed FIR filter
@@ -233,10 +385,23 @@ def bandpass_kaiser(ntaps, lowcut, highcut, fs, width):
 # Zero padding a signal left or right
 def zero_pad(y, N_pad, lr='right'):
     """
-    Zero padding:
-    Adds N_pad - len(y) zeros to the signal
-    so that the total length of the padded signal
-    is N_pad
+    Zero padding.
+
+    Adds zeros to the signal to make its total length equal to N_pad.
+
+    Parameters
+    ----------
+    y : array_like
+        Input signal to be padded.
+    N_pad : int
+        Desired total length of the padded signal.
+    lr : {'right', 'left'}, optional
+        Specifies whether to pad on the right or left. Default is 'right'.
+
+    Returns
+    -------
+    array_like
+        Zero-padded signal.
     """
     N = len(y)
     if N_pad > N:
@@ -251,8 +416,25 @@ def zero_pad(y, N_pad, lr='right'):
 # Windowed signal
 def get_windowed_signal(y, ratio=0.5, lr='right', window='tukey', alpha=0.02):
     """
-    Windowed signal:
-    Zero pads the signal and applies a window to it
+    Apply a window to the signal with optional zero-padding.
+
+    Parameters
+    ----------
+    y : array_like
+        Input signal.
+    ratio : float, optional
+        Ratio of the window length to the signal length. Default is 0.5.
+    lr : {'right', 'left'}, optional
+        Specifies whether to pad on the right or left. Default is 'right'.
+    window : {'tukey', 'boxcar'}, optional
+        Type of window to apply. Default is 'tukey'.
+    alpha : float, optional
+        Shape parameter for the Tukey window. Default is 0.02.
+
+    Returns
+    -------
+    tuple
+        A tuple containing the windowed signal and the applied window.
     """
     N_win = int(len(y) * ratio)
     if window == 'tukey':
@@ -266,6 +448,31 @@ def get_windowed_signal(y, ratio=0.5, lr='right', window='tukey', alpha=0.02):
 
 # This function loads knife edge measurements from thz files.
 def load_knife_edge_meas(x_path, y_path):
+    """
+    Load knife-edge measurement data from files.
+
+    Parameters
+    ----------
+    x_path : str
+        Path to the file containing x-axis measurements.
+    y_path : str
+        Path to the file containing y-axis measurements.
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - pos_x : ndarray
+            Positions along the x-axis.
+        - pos_y : ndarray
+            Positions along the y-axis.
+        - np_psf_t_x_0 : ndarray
+            PSF traces along the x-axis.
+        - np_psf_t_y_0 : ndarray
+            PSF traces along the y-axis.
+        - times : ndarray
+            Time array corresponding to the measurements.
+    """
 
     psf_t_x = []
     psf_t_y = []
@@ -346,6 +553,37 @@ def load_knife_edge_meas(x_path, y_path):
 
 # Get the center of the PSF
 def fit_mean_beam(x_axis_psf, y_axis_psf, np_psf_t_x, np_psf_t_y, nrange=None, plot=False):
+    """
+    Fit the mean beam profile to the PSF data.
+
+    Parameters
+    ----------
+    x_axis_psf : array_like
+        x-axis positions of the PSF.
+    y_axis_psf : array_like
+        y-axis positions of the PSF.
+    np_psf_t_x : ndarray
+        PSF traces along the x-axis.
+    np_psf_t_y : ndarray
+        PSF traces along the y-axis.
+    nrange : tuple of int, optional
+        Range of indices to crop the PSF for fitting. Default is None.
+    plot : bool, optional
+        If True, plots the fitting results. Default is False.
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - x0 : float
+            Center position of the PSF along the x-axis.
+        - y0 : float
+            Center position of the PSF along the y-axis.
+        - popt_x : ndarray
+            Optimal parameters for the x-axis fit.
+        - popt_y : ndarray
+            Optimal parameters for the y-axis fit.
+    """
 
     print("Extracting the center of the PSF...")
 
@@ -446,6 +684,37 @@ def fit_mean_beam(x_axis_psf, y_axis_psf, np_psf_t_x, np_psf_t_y, nrange=None, p
 
 # Create the filters for the frequency domains
 def create_filters(n_filters, times, win_width, low_cut, high_cut, start_freq, end_freq, plot=False):
+    """
+    Create a set of bandpass filters with logarithmically spaced center frequencies.
+
+    Parameters
+    ----------
+    n_filters : int
+        Number of filters to create.
+    times : array_like
+        Time array corresponding to the signal.
+    win_width : float
+        Width of the Kaiser window.
+    low_cut : float
+        Lower cutoff frequency for the filters.
+    high_cut : float
+        Upper cutoff frequency for the filters.
+    start_freq : float
+        Starting frequency for the logarithmic spacing.
+    end_freq : float
+        Ending frequency for the logarithmic spacing.
+    plot : bool, optional
+        If True, plots the filter responses. Default is False.
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - filters : list of ndarray
+            List of filter coefficients.
+        - filt_freqs : list of float
+            Center frequencies of the filters.
+    """
     print(f"Creating {n_filters} log-spaced filters...")
 
     # Determine FIR length
@@ -500,6 +769,51 @@ def create_filters(n_filters, times, win_width, low_cut, high_cut, start_freq, e
 
 # Fit the beam widths for each window
 def fit_beam_widths(x0, y0, x_axis_psf, y_axis_psf, np_psf_t_x, np_psf_t_y, filters, filt_freqs, w_max, nrange=None, plot=False):
+    """
+    Fit beam widths for a set of filters and compute their parameters.
+
+    Parameters
+    ----------
+    x0 : float
+        Initial guess for the x-axis center of the beam.
+    y0 : float
+        Initial guess for the y-axis center of the beam.
+    x_axis_psf : array_like
+        x-axis positions of the PSF.
+    y_axis_psf : array_like
+        y-axis positions of the PSF.
+    np_psf_t_x : ndarray
+        PSF traces along the x-axis.
+    np_psf_t_y : ndarray
+        PSF traces along the y-axis.
+    filters : list of ndarray
+        List of filters to apply to the PSF traces.
+    filt_freqs : array_like
+        Frequencies corresponding to the filters.
+    w_max : float
+        Maximum beam width for fitting.
+    nrange : tuple of int, optional
+        Range of indices to crop the PSF for fitting. Default is None.
+    plot : bool, optional
+        If True, plots the fitting results. Default is False.
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - xxx : ndarray
+            x-axis positions for the Gaussian fit.
+        - yyy : ndarray
+            y-axis positions for the Gaussian fit.
+        - popt_xs : ndarray
+            Optimal parameters for the x-axis fits.
+        - popt_ys : ndarray
+            Optimal parameters for the y-axis fits.
+        - popt_wx : ndarray
+            Parameters for the beam width fit along the x-axis.
+        - popt_wy : ndarray
+            Parameters for the beam width fit along the y-axis.
+    """
     w_xs = []
     w_ys = []
     x0s = []
@@ -635,6 +949,21 @@ def fit_beam_widths(x0, y0, x_axis_psf, y_axis_psf, np_psf_t_x, np_psf_t_y, filt
     return xxx, yyy, np.array(popt_xs), np.array(popt_ys), popt_wx, popt_wy
 
 def range_max_min(range_max, wmin):
+    """
+    Ensure the range maximum is not less than a specified minimum.
+
+    Parameters
+    ----------
+    range_max : float
+        The current maximum range value.
+    wmin : float
+        The minimum allowable range value.
+
+    Returns
+    -------
+    float
+        Adjusted range maximum.
+    """
     if range_max < wmin:
         range_max = wmin
     return range_max
@@ -642,6 +971,23 @@ def range_max_min(range_max, wmin):
 # Richardson-Lucy deconvolution working in the frequency domain
 # Computes the deconvolution for one window
 def richardson_lucy_worker(nf):
+    """
+    Perform Richardson-Lucy deconvolution for a specific filter index.
+
+    Parameters
+    ----------
+    nf : int
+        Index of the filter to be applied.
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - traces_filtered : ndarray
+            Deconvolved and filtered traces reshaped to the original dimensions.
+        - nf : int
+            The filter index used for processing.
+    """
     shape = traces_glob.shape
     traces_flatten = traces_glob.reshape(shape[0] * shape[1], shape[2])
     traces_filtered = np.zeros(traces_flatten.shape)
@@ -692,6 +1038,39 @@ def richardson_lucy_worker(nf):
 # Computes the deconvolution for all filters
 # This function uses multiprocessing to speed up the computation
 def richardson_lucy_freq(traces, x_axis_psf, y_axis_psf, popt_xs, popt_ys, filters, filt_freqs, num_iter, scan_type, center_cor=True, multithread=False):
+    """
+    Perform Richardson-Lucy deconvolution across multiple filters.
+
+    Parameters
+    ----------
+    traces : ndarray
+        Input traces to be deconvolved.
+    x_axis_psf : array_like
+        x-axis positions of the PSF.
+    y_axis_psf : array_like
+        y-axis positions of the PSF.
+    popt_xs : ndarray
+        Optimal parameters for the x-axis PSF fits.
+    popt_ys : ndarray
+        Optimal parameters for the y-axis PSF fits.
+    filters : list of ndarray
+        List of filters to apply to the traces.
+    filt_freqs : array_like
+        Frequencies corresponding to the filters.
+    num_iter : int
+        Number of iterations for the deconvolution process.
+    scan_type : {'transmission', 'reflectance'}
+        Type of scan being processed.
+    center_cor : bool, optional
+        If True, applies center correction to the PSF parameters. Default is True.
+    multithread : bool, optional
+        If True, enables multithreaded processing. Default is False.
+
+    Returns
+    -------
+    ndarray
+        Deconvolved traces summed across all filters.
+    """
     # This is necessary to avoid large overhead when using multiprocessing
     # It's dirty but it works
     global traces_glob, x_axis_psf_glob, y_axis_psf_glob, popt_xs_glob, popt_ys_glob, filters_glob, num_iter_glob, filt_freqs_glob, type_glob, center_cor_glob
@@ -728,6 +1107,19 @@ def richardson_lucy_freq(traces, x_axis_psf, y_axis_psf, popt_xs, popt_ys, filte
 # Richardson-Lucy deconvolution working in the frequency domain
 # Computes the deconvolution for one window
 def wiener_worker(nf):
+    """
+    Perform Wiener deconvolution for a specific filter index.
+
+    Parameters
+    ----------
+    nf : int
+        Index of the filter to be applied.
+
+    Returns
+    -------
+    ndarray
+        Deconvolved and filtered traces reshaped to the original dimensions.
+    """
     shape = traces_glob.shape
     traces_flatten = traces_glob.reshape(shape[0] * shape[1], shape[2])
     traces_filtered = np.zeros(traces_flatten.shape)
@@ -778,6 +1170,39 @@ def wiener_worker(nf):
 # Computes the deconvolution for all filters
 # This function uses multiprocessing to speed up the computation
 def wiener_freq(traces, x_axis_psf, y_axis_psf, popt_xs, popt_ys, filters, filt_freqs, scan_type, balance, center_cor=True, multithread=False):
+    """
+    Perform Wiener deconvolution across multiple filters.
+
+    Parameters
+    ----------
+    traces : ndarray
+        Input traces to be deconvolved.
+    x_axis_psf : array_like
+        x-axis positions of the PSF.
+    y_axis_psf : array_like
+        y-axis positions of the PSF.
+    popt_xs : ndarray
+        Optimal parameters for the x-axis PSF fits.
+    popt_ys : ndarray
+        Optimal parameters for the y-axis PSF fits.
+    filters : list of ndarray
+        List of filters to apply to the traces.
+    filt_freqs : array_like
+        Frequencies corresponding to the filters.
+    scan_type : {'transmission', 'reflectance'}
+        Type of scan being processed.
+    balance : float
+        Balance parameter for the Wiener deconvolution.
+    center_cor : bool, optional
+        If True, applies center correction to the PSF parameters. Default is True.
+    multithread : bool, optional
+        If True, enables multithreaded processing. Default is False.
+
+    Returns
+    -------
+    ndarray
+        Deconvolved traces summed across all filters.
+    """
     # This is necessary to avoid large overhead when using multiprocessing
     # It's dirty but it works
     global traces_glob, x_axis_psf_glob, y_axis_psf_glob, popt_xs_glob, popt_ys_glob, filters_glob, filt_freqs_glob, type_glob, center_cor_glob, balance_glob

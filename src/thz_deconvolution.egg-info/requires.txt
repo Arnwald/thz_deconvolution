@@ -1,5 +1,0 @@
-numpy
-scipy
-matplotlib
-zmq
-tqdm
