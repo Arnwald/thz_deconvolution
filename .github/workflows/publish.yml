@@ -3,11 +3,15 @@ name: Publish to PyPI
 on:
   push:
     tags:
-      - "v*" # Only triggers on version tags like v0.1.0
+      - "v*" # Only triggers on version tags
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
