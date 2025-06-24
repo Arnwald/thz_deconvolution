@@ -57,7 +57,7 @@ pip install git+https://github.com/dotTHzTAG/pydotthz.git@main#egg=pydotthz
 ### Beam Width Fitting Example
 
 ```python
-from thz_deconvolution import load_knife_edge_meas, fit_beam_widths
+from thz_deconvolution import load_knife_edge_meas, fit_mean_beam, fit_beam_widths, create_psf_2d, create_filters
 
 # Frequency and filter parameters
 low_cut = 0.1
