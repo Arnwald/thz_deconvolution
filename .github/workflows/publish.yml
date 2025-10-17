@@ -1,14 +1,15 @@
 name: Publish to PyPI
 
 on:
-  push:
-    tags:
-      - "v*" # Only triggers on version tags
+  release:
+    types: [ created ]
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-
+    environment:
+      name: release
+      url: https://pypi.org/p/thz-deconvolution
     permissions:
       id-token: write
       contents: read
@@ -19,7 +20,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install build tools
         run: pip install build

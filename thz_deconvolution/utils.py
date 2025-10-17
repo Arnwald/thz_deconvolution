@@ -2,7 +2,7 @@ from scipy.signal.windows import tukey
 from scipy.signal import convolve
 from scipy import interpolate
 from skimage import restoration
-from scipy.fft import rfft, irfft, rfftfreq
+from scipy.fft import rfft, rfftfreq
 from tqdm import tqdm
 from scipy.signal import firwin, kaiser_atten, kaiser_beta, freqz
 from scipy.optimize import curve_fit
@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import math
+
 
 # Create a 2D PSF from 2x1D PSFs
 def create_psf_2d(psf_x, psf_y, x, y, plot=False):
@@ -126,9 +127,9 @@ def richardson_lucy(d, psf, num_iter):
     pad = int(psf.shape[0] / 8)
     d = np.pad(d, pad, 'minimum')
     psf = psf / np.sum(psf)
-    psf_T = np.flip(psf) # Flipped PSF
-    u = d.copy() # Initial guess
-    eps = 1e-12 # Regularization parameter to avoid division by zero
+    psf_T = np.flip(psf)  # Flipped PSF
+    u = d.copy()  # Initial guess
+    eps = 1e-12  # Regularization parameter to avoid division by zero
     for _ in range(num_iter):
         u = np.multiply(u, convolve(d / (convolve(u, psf, mode='same') + eps), psf_T, mode='same'))
     # Clipping the values
@@ -147,9 +148,9 @@ def richardson_lucy_unclipped(d, psf, num_iter):
     pad = int(psf.shape[0] / 2)
     d = np.pad(d, pad, 'reflect')
     psf = psf / np.sum(psf)
-    psf_T = np.flip(psf) # Flipped PSF
-    u = d.copy() # Initial guess
-    eps = 1e-12 # Regularization parameter to avoid division by zero
+    psf_T = np.flip(psf)  # Flipped PSF
+    u = d.copy()  # Initial guess
+    eps = 1e-12  # Regularization parameter to avoid division by zero
     for _ in range(num_iter):
         u = np.multiply(u, convolve(d / (convolve(u, psf, mode='same') + eps), psf_T, mode='same'))
     return u[pad:-pad, pad:-pad]
@@ -173,6 +174,7 @@ def blackman_func(n, M):
         Blackman window values.
     """
     return 0.42 - 0.5 * np.cos(2 * np.pi * n / M) + 0.08 * np.cos(4 * np.pi * n / M)
+
 
 # Reproduction of the toptica window function
 def toptica_window(t, start=1, end=7):
@@ -201,6 +203,7 @@ def toptica_window(t, start=1, end=7):
     window[t <= (t[0] + start)] = a
     window[t >= (t[-1] - end)] = b
     return window
+
 
 # Zero-padding function to extend the time array
 def zero_padding(time, pulse, df_padded=0.01):
@@ -290,7 +293,7 @@ def get_fft(t, p, df=0.01, window_start=1, window_end=7, return_td=False):
     arg = np.unwrap(angle)
     f = rfftfreq(n, 1 / sample_rate) / 1e12
     if return_td:
-        return t,p,f, a, np.abs(arg)
+        return t, p, f, a, np.abs(arg)
     else:
         return f, a, np.abs(arg)
 
@@ -302,6 +305,7 @@ def get_fft_c(t, p, df=0.01, window_start=1, window_end=7):
 
     fft_p = rfft(p)
     return fft_p
+
 
 # Extracting a subtring from a text between two strings
 def extract_substring(text, start_str, end_str):
@@ -320,6 +324,7 @@ def extract_substring(text, start_str, end_str):
         print(e)
         # Return None if the start_str or end_str are not found
         return None
+
 
 # Error function
 def error_f(x, x0, w):
@@ -342,9 +347,11 @@ def error_f(x, x0, w):
     """
     return (1 + scipy.special.erf(math.sqrt(2) * (x - np.array(x0)) / w)) / 2
 
+
 # Gaussian function
 def gaussian(x, x0, w):
     return math.sqrt(2 / math.pi) * np.exp(-2 * (x - np.array(x0)) ** 2 / (w ** 2)) / w
+
 
 # Expected beam width function
 def beam_w(freq, a):
@@ -365,14 +372,15 @@ def beam_w(freq, a):
     """
     return a / np.array(freq)
 
+
 # Kaiser windowed FIR filter
 def bandpass_kaiser(ntaps, lowcut, highcut, fs, width):
-    atten = kaiser_atten(ntaps, width/(0.5*fs))
+    atten = kaiser_atten(ntaps, width / (0.5 * fs))
     beta = kaiser_beta(atten)
     if lowcut <= 0.0:
         cutoffs = highcut
         pass_zero = 'lowpass'
-    elif highcut >= 0.5*fs:
+    elif highcut >= 0.5 * fs:
         cutoffs = lowcut
         pass_zero = 'highpass'
     else:
@@ -381,6 +389,7 @@ def bandpass_kaiser(ntaps, lowcut, highcut, fs, width):
     taps = firwin(ntaps, cutoffs, fs=fs, pass_zero=pass_zero,
                   window=('kaiser', beta), scale=False)
     return taps
+
 
 # Zero padding a signal left or right
 def zero_pad(y, N_pad, lr='right'):
@@ -412,6 +421,7 @@ def zero_pad(y, N_pad, lr='right'):
         else:
             raise ValueError("lr must be either 'right' or 'left'")
     return y
+
 
 # Windowed signal
 def get_windowed_signal(y, ratio=0.5, lr='right', window='tukey', alpha=0.02):
@@ -445,6 +455,7 @@ def get_windowed_signal(y, ratio=0.5, lr='right', window='tukey', alpha=0.02):
         raise ValueError("Window must be 'kaiser'")
     w = zero_pad(w, len(y), lr=lr)
     return y * w, w
+
 
 # This function loads knife edge measurements from thz files.
 def load_knife_edge_meas(x_path, y_path):
@@ -496,11 +507,11 @@ def load_knife_edge_meas(x_path, y_path):
     print("Loading x raw measurements...")
     with DotthzFile(x_path, "r") as file:
         # read the first group/measurement
-        keys = list(file.measurements.keys())
+        keys = list(file.keys())
 
         for key in keys:
             x = extract_substring(key, "=", "")
-            datasets = file.measurements.get(key).datasets
+            datasets = file[key].datasets
             key = list(datasets.keys())[0]
 
             pulse_trace = np.array(datasets.get(key))[:, 1]
@@ -516,11 +527,11 @@ def load_knife_edge_meas(x_path, y_path):
     print("Loading y raw measurements...")
     with DotthzFile(y_path, "r") as file:
         # read the first group/measurement
-        keys = list(file.measurements.keys())
+        keys = list(file.keys())
 
         for key in keys:
             y = extract_substring(key, "=", "")
-            datasets = file.measurements.get(key).datasets
+            datasets = file[key].datasets
             key = list(datasets.keys())[0]
 
             pulse_trace = np.array(datasets.get(key))[:, 1]
@@ -550,6 +561,7 @@ def load_knife_edge_meas(x_path, y_path):
     np_psf_t_y_0 = np_psf_t_y_0[inds]
 
     return pos_x, pos_y, np_psf_t_x_0, np_psf_t_y_0, times
+
 
 # Get the center of the PSF
 def fit_mean_beam(x_axis_psf, y_axis_psf, np_psf_t_x, np_psf_t_y, nrange=None, plot=False):
@@ -641,7 +653,9 @@ def fit_mean_beam(x_axis_psf, y_axis_psf, np_psf_t_x, np_psf_t_y, nrange=None, p
         plt.xlabel("y axis [mm]")
         plt.ylabel(r'$P/P_{\mathrm{max}}$')
         plt.title("PSF fit in x")
-        plt.legend([r'Measured $P/P_{\mathrm{max}}$', r'Fit with $P_n(x)$', r'$\mathrm{d}P/\mathrm{d}x/P_{\mathrm{max}}$', r'Fit with $I_n(x)$'])
+        plt.legend(
+            [r'Measured $P/P_{\mathrm{max}}$', r'Fit with $P_n(x)$', r'$\mathrm{d}P/\mathrm{d}x/P_{\mathrm{max}}$',
+             r'Fit with $I_n(x)$'])
         plt.text(x_axis_psf[0], 0.1 * max(intensity_x), r"$w_x=$" + str(abs(round(popt_x[-1], 2))), fontsize=12)
         plt.show()
 
@@ -653,7 +667,9 @@ def fit_mean_beam(x_axis_psf, y_axis_psf, np_psf_t_x, np_psf_t_y, nrange=None, p
         plt.xlabel("x axis [mm]")
         plt.ylabel(r'$P/P_{\mathrm{max}}$')
         plt.title("PSF fit in y")
-        plt.legend([r'Measured $P/P_{\mathrm{max}}$', r'Fit with $P_n(y)$', r'$\mathrm{d}P/\mathrm{d}y/P_{\mathrm{max}}$', r'Fit with $I_n(y)$'])
+        plt.legend(
+            [r'Measured $P/P_{\mathrm{max}}$', r'Fit with $P_n(y)$', r'$\mathrm{d}P/\mathrm{d}y/P_{\mathrm{max}}$',
+             r'Fit with $I_n(y)$'])
         plt.text(y_axis_psf[0], 0.1 * max(intensity_y), r"$w_y=$" + str(abs(round(popt_y[-1], 2))), fontsize=12)
         plt.show()
 
@@ -681,6 +697,7 @@ def fit_mean_beam(x_axis_psf, y_axis_psf, np_psf_t_x, np_psf_t_y, nrange=None, p
         create_psf_2d(gauss_x, gauss_y, xx, yy, plot=True)
 
     return x0, y0, popt_x, popt_y
+
 
 # Create the filters for the frequency domains
 def create_filters(n_filters, times, win_width, low_cut, high_cut, start_freq, end_freq, plot=False):
@@ -767,8 +784,10 @@ def create_filters(n_filters, times, win_width, low_cut, high_cut, start_freq, e
 
     return filters, filt_freqs.tolist()
 
+
 # Fit the beam widths for each window
-def fit_beam_widths(x0, y0, x_axis_psf, y_axis_psf, np_psf_t_x, np_psf_t_y, filters, filt_freqs, w_max, nrange=None, plot=False):
+def fit_beam_widths(x0, y0, x_axis_psf, y_axis_psf, np_psf_t_x, np_psf_t_y, filters, filt_freqs, w_max, nrange=None,
+                    plot=False):
     """
     Fit beam widths for a set of filters and compute their parameters.
 
@@ -832,8 +851,8 @@ def fit_beam_widths(x0, y0, x_axis_psf, y_axis_psf, np_psf_t_x, np_psf_t_y, filt
         n_max = nrange[1]
         x_axis_psf_2 = x_axis_psf[n_min:n_max]
         y_axis_psf_2 = y_axis_psf[n_min:n_max]
-        np_psf_t_x_2 = np_psf_t_x[n_min:n_max,:]
-        np_psf_t_y_2 = np_psf_t_y[n_min:n_max,:]
+        np_psf_t_x_2 = np_psf_t_x[n_min:n_max, :]
+        np_psf_t_y_2 = np_psf_t_y[n_min:n_max, :]
     else:
         x_axis_psf_2 = x_axis_psf
         y_axis_psf_2 = y_axis_psf
@@ -859,11 +878,11 @@ def fit_beam_widths(x0, y0, x_axis_psf, y_axis_psf, np_psf_t_x, np_psf_t_y, filt
         np_psf_t_x_filtered = np.zeros(np_psf_t_x_2.shape)
         for nx in range(np_psf_t_x_2.shape[0]):
             # Filter the signal with the window
-            filtered = signal.convolve(np_psf_t_x_2[nx,:], filters[nf], mode='same')
-            np_psf_t_x_filtered[nx,:] = filtered
+            filtered = signal.convolve(np_psf_t_x_2[nx, :], filters[nf], mode='same')
+            np_psf_t_x_filtered[nx, :] = filtered
 
         # Compute the intensity of the filtered signal
-        intensity_x = np.sum(np_psf_t_x_filtered[:,:] ** 2, axis=1)
+        intensity_x = np.sum(np_psf_t_x_filtered[:, :] ** 2, axis=1)
         intensity_x = intensity_x - np.min(intensity_x)
         intensity_x = intensity_x / np.max(intensity_x)
         # Fit the error function to the intensity
@@ -879,11 +898,11 @@ def fit_beam_widths(x0, y0, x_axis_psf, y_axis_psf, np_psf_t_x, np_psf_t_y, filt
         np_psf_t_y_filtered = np.zeros(np_psf_t_y_2.shape)
         for ny in range(np_psf_t_y_2.shape[0]):
             # Filter the signal with the window
-            filtered = signal.convolve(np_psf_t_y_2[ny,:], filters[nf], mode='same')
-            np_psf_t_y_filtered[ny,:] = filtered
+            filtered = signal.convolve(np_psf_t_y_2[ny, :], filters[nf], mode='same')
+            np_psf_t_y_filtered[ny, :] = filtered
 
         # Compute the intensity of the filtered signal
-        intensity_y = np.sum(np_psf_t_y_filtered[:,:] ** 2, axis=1)
+        intensity_y = np.sum(np_psf_t_y_filtered[:, :] ** 2, axis=1)
         intensity_y = intensity_y - np.min(intensity_y)
         intensity_y = intensity_y / np.max(intensity_y)
         # Fit the error function to the intensity
@@ -899,7 +918,6 @@ def fit_beam_widths(x0, y0, x_axis_psf, y_axis_psf, np_psf_t_x, np_psf_t_y, filt
     popt_wy, _ = curve_fit(beam_w, filt_freqs[n_min:], w_ys[n_min:], maxfev=8000)
 
     if plot:
-
         plt.plot(filt_freqs, w_xs, 'C0')
         plt.plot(filt_freqs, w_ys, 'C3')
         plt.xlabel("Frequency [THz]")
@@ -948,6 +966,7 @@ def fit_beam_widths(x0, y0, x_axis_psf, y_axis_psf, np_psf_t_x, np_psf_t_y, filt
 
     return xxx, yyy, np.array(popt_xs), np.array(popt_ys), popt_wx, popt_wy
 
+
 def range_max_min(range_max, wmin):
     """
     Ensure the range maximum is not less than a specified minimum.
@@ -967,6 +986,7 @@ def range_max_min(range_max, wmin):
     if range_max < wmin:
         range_max = wmin
     return range_max
+
 
 # Richardson-Lucy deconvolution working in the frequency domain
 # Computes the deconvolution for one window
@@ -992,7 +1012,7 @@ def richardson_lucy_worker(nf):
     traces_flatten = traces_glob.reshape(shape[0] * shape[1], shape[2])
     traces_filtered = np.zeros(traces_flatten.shape)
     for nn in range(traces_flatten.shape[0]):
-        traces_filtered[nn,:] = signal.convolve(traces_flatten[nn], filters_glob[nf], mode='same')
+        traces_filtered[nn, :] = signal.convolve(traces_flatten[nn], filters_glob[nf], mode='same')
     traces_filtered = traces_filtered.reshape(shape[0], shape[1], shape[-1])
     range_max_x = (popt_xs_glob[nf][1] + np.abs(popt_xs_glob[nf][0])) * 3
     range_max_y = (popt_ys_glob[nf][1] + np.abs(popt_ys_glob[nf][0])) * 3
@@ -1014,14 +1034,14 @@ def richardson_lucy_worker(nf):
         _, _, psf_2d = create_psf_2d(gaussian_x, np.flip(gaussian_y), x, y, plot=False)
     else:
         raise ValueError("The scan type must be either 'transmission' or 'reflectance'")
-    image_filtered = np.sum(traces_filtered**2, axis=2) + 1.0 # Avoid division by zero
-    w_min = np.min(np.array(popt_xs_glob)[:,1])
-    w_max = np.max(np.array(popt_xs_glob)[:,1])
+    image_filtered = np.sum(traces_filtered ** 2, axis=2) + 1.0  # Avoid division by zero
+    w_min = np.min(np.array(popt_xs_glob)[:, 1])
+    w_max = np.max(np.array(popt_xs_glob)[:, 1])
     num_iter_min = 1
     num_iter = (popt_xs_glob[nf][1] - w_min) / (w_max - w_min) * (num_iter_glob - num_iter_min) + num_iter_min
     num_iter = int(num_iter)
     deconvolved_filtered = richardson_lucy_unclipped(image_filtered, psf_2d, num_iter=num_iter)
-    #deconvolved_filtered = restoration.richardson_lucy(image_filtered, psf_2d, num_iter=num_iter, clip=False)
+    # deconvolved_filtered = restoration.richardson_lucy(image_filtered, psf_2d, num_iter=num_iter, clip=False)
 
     # Compute gains
     deconvolution_gains = deconvolved_filtered / image_filtered
@@ -1030,14 +1050,15 @@ def richardson_lucy_worker(nf):
     traces_filtered = traces_filtered.reshape(shape[0] * shape[1], shape[2])
     # Apply the gains to the filtered traces
     for nn in range(traces_filtered.shape[0]):
-        traces_filtered[nn,:] = traces_filtered[nn,:] * deconvolution_gains_flatten[nn]
+        traces_filtered[nn, :] = traces_filtered[nn, :] * deconvolution_gains_flatten[nn]
     return traces_filtered.reshape(shape), nf
 
 
 # Richardson-Lucy deconvolution working in the frequency domain
 # Computes the deconvolution for all filters
 # This function uses multiprocessing to speed up the computation
-def richardson_lucy_freq(traces, x_axis_psf, y_axis_psf, popt_xs, popt_ys, filters, filt_freqs, num_iter, scan_type, center_cor=True, multithread=False):
+def richardson_lucy_freq(traces, x_axis_psf, y_axis_psf, popt_xs, popt_ys, filters, filt_freqs, num_iter, scan_type,
+                         center_cor=True, multithread=False):
     """
     Perform Richardson-Lucy deconvolution across multiple filters.
 
@@ -1086,8 +1107,8 @@ def richardson_lucy_freq(traces, x_axis_psf, y_axis_psf, popt_xs, popt_ys, filte
     type_glob = scan_type
     center_cor_glob = center_cor
     if not center_cor:
-        popt_xs_glob[:,0] = 0.0
-        popt_ys_glob[:,0] = 0.0
+        popt_xs_glob[:, 0] = 0.0
+        popt_ys_glob[:, 0] = 0.0
     n_filters = len(filters)
     if multithread:
         with tqdm(total=n_filters) as pbar:
@@ -1102,6 +1123,93 @@ def richardson_lucy_freq(traces, x_axis_psf, y_axis_psf, popt_xs, popt_ys, filte
             traces, nf = richardson_lucy_worker(nf)
             deconvolved += traces
     return deconvolved
+
+
+def richardson_lucy_single_pulse(pulse, popt_xs, popt_ys, filters, filt_freqs, num_iter, scan_type,
+                                 center_cor=True):
+    """
+    Perform Richardson-Lucy deconvolution on a single pulse.
+
+    Parameters
+    ----------
+    pulse : ndarray
+        Single pulse trace to be deconvolved.
+    popt_xs : ndarray
+        Optimal parameters for the x-axis PSF fits.
+    popt_ys : ndarray
+        Optimal parameters for the y-axis PSF fits.
+    filters : list of ndarray
+        List of filters to apply to the pulse.
+    filt_freqs : array_like
+        Frequencies corresponding to the filters.
+    num_iter : int
+        Number of iterations for the deconvolution process.
+    scan_type : {'transmission', 'reflectance'}
+        Type of scan being processed.
+    center_cor : bool, optional
+        If True, applies center correction to the PSF parameters. Default is True.
+
+    Returns
+    -------
+    ndarray
+        Deconvolved pulse trace.
+    """
+    if not center_cor:
+        popt_xs = popt_xs.copy()
+        popt_ys = popt_ys.copy()
+        popt_xs[:, 0] = 0.0
+        popt_ys[:, 0] = 0.0
+
+    deconvolved_pulse = np.zeros_like(pulse)
+
+    # Process each filter
+    for nf in range(len(filters)):
+        # Filter the pulse
+        pulse_filtered = signal.convolve(pulse, filters[nf], mode='same')
+
+        # Create PSF for this frequency
+        range_max_x = (popt_xs[nf][1] + np.abs(popt_xs[nf][0])) * 3
+        range_max_y = (popt_ys[nf][1] + np.abs(popt_ys[nf][0])) * 3
+        range_max_x = max(range_max_x, 2.5)
+        range_max_y = max(range_max_y, 2.5)
+
+        dx = 0.1  # Default spatial resolution
+        dy = 0.1
+
+        x = np.arange(-range_max_x, range_max_x + dx, dx)
+        y = np.arange(-range_max_y, range_max_y + dy, dy)
+
+        gaussian_x = gaussian(x, *popt_xs[nf])
+        gaussian_y = gaussian(y, *popt_ys[nf])
+
+        if scan_type == 'transmission':
+            _, _, psf_2d = create_psf_2d(gaussian_x, gaussian_y, x, y, plot=False)
+        elif scan_type == 'reflectance':
+            _, _, psf_2d = create_psf_2d(gaussian_x, np.flip(gaussian_y), x, y, plot=False)
+        else:
+            raise ValueError("The scan type must be either 'transmission' or 'reflectance'")
+
+        # Create a 2D image from the pulse (assuming point source at center)
+        image_size = max(len(x), len(y))
+        pulse_image = np.zeros((image_size, image_size))
+        center = image_size // 2
+        pulse_image[center, center] = np.sum(pulse_filtered ** 2) + 1.0  # Avoid division by zero
+
+        # Determine number of iterations based on beam width
+        w_min = np.min(popt_xs[:, 1])
+        w_max = np.max(popt_xs[:, 1])
+        num_iter_min = 1
+        iter_ratio = (popt_xs[nf][1] - w_min) / (w_max - w_min) if w_max != w_min else 0
+        current_iter = int(iter_ratio * (num_iter - num_iter_min) + num_iter_min)
+
+        # Perform deconvolution
+        deconvolved_image = richardson_lucy_unclipped(pulse_image, psf_2d, num_iter=current_iter)
+
+        # Calculate gain and apply to filtered pulse
+        gain = np.sqrt(deconvolved_image[center, center] / pulse_image[center, center])
+        deconvolved_pulse += pulse_filtered * gain
+
+    return deconvolved_pulse
 
 
 # Richardson-Lucy deconvolution working in the frequency domain
@@ -1124,7 +1232,7 @@ def wiener_worker(nf):
     traces_flatten = traces_glob.reshape(shape[0] * shape[1], shape[2])
     traces_filtered = np.zeros(traces_flatten.shape)
     for nn in range(traces_flatten.shape[0]):
-        traces_filtered[nn,:] = signal.convolve(traces_flatten[nn], filters_glob[nf], mode='same')
+        traces_filtered[nn, :] = signal.convolve(traces_flatten[nn], filters_glob[nf], mode='same')
     traces_filtered = traces_filtered.reshape(shape[0], shape[1], shape[-1])
     range_max_x = (popt_xs_glob[nf][1] + np.abs(popt_xs_glob[nf][0])) * 3
     range_max_y = (popt_ys_glob[nf][1] + np.abs(popt_ys_glob[nf][0])) * 3
@@ -1147,11 +1255,11 @@ def wiener_worker(nf):
     else:
         raise ValueError("The scan type must be either 'transmission' or 'reflectance'")
 
-    image_filtered = np.sum(traces_filtered**2, axis=2) + 1.0 # Avoid division by zero
+    image_filtered = np.sum(traces_filtered ** 2, axis=2) + 1.0  # Avoid division by zero
     pad = int(len(gaussian_x) // 4)
     image_filtered = np.pad(image_filtered, pad, 'minimum')
-    #deconvolved_filtered, _ = restoration.unsupervised_wiener(image_filtered, psf_2d, clip = False)
-    deconvolved_filtered = restoration.wiener(image_filtered, psf_2d, balance=balance_glob, clip = False)
+    # deconvolved_filtered, _ = restoration.unsupervised_wiener(image_filtered, psf_2d, clip = False)
+    deconvolved_filtered = restoration.wiener(image_filtered, psf_2d, balance=balance_glob, clip=False)
     deconvolved_filtered = deconvolved_filtered[pad:-pad, pad:-pad]
     deconvolved_filtered[deconvolved_filtered < 0] = 0
 
@@ -1162,14 +1270,15 @@ def wiener_worker(nf):
     traces_filtered = traces_filtered.reshape(shape[0] * shape[1], shape[2])
     # Apply the gains to the filtered traces
     for nn in range(traces_filtered.shape[0]):
-        traces_filtered[nn,:] = traces_filtered[nn,:] * deconvolution_gains_flatten[nn]
+        traces_filtered[nn, :] = traces_filtered[nn, :] * deconvolution_gains_flatten[nn]
     return traces_filtered.reshape(shape)
 
 
 # Richardson-Lucy deconvolution working in the frequency domain
 # Computes the deconvolution for all filters
 # This function uses multiprocessing to speed up the computation
-def wiener_freq(traces, x_axis_psf, y_axis_psf, popt_xs, popt_ys, filters, filt_freqs, scan_type, balance, center_cor=True, multithread=False):
+def wiener_freq(traces, x_axis_psf, y_axis_psf, popt_xs, popt_ys, filters, filt_freqs, scan_type, balance,
+                center_cor=True, multithread=False):
     """
     Perform Wiener deconvolution across multiple filters.
 
@@ -1219,8 +1328,8 @@ def wiener_freq(traces, x_axis_psf, y_axis_psf, popt_xs, popt_ys, filters, filt_
     balance_glob = balance
     n_filters = len(filters)
     if not center_cor:
-        popt_xs_glob[:,0] = 0.0
-        popt_ys_glob[:,0] = 0.0
+        popt_xs_glob[:, 0] = 0.0
+        popt_ys_glob[:, 0] = 0.0
     if multithread:
         with tqdm(total=n_filters) as pbar:
             with ThreadPoolExecutor(max_workers=mp.cpu_count()) as executor:

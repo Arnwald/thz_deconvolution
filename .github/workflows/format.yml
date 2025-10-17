@@ -1,0 +1,18 @@
+name: PEP8
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check-format:
+    name: PEP8
+    runs-on: ubuntu-latest
+    steps:
+      - name: PEP8 Action
+        uses: quentinguidee/pep8-action@v1
