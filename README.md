@@ -10,7 +10,6 @@ Published in IEEE Transactions on Terahertz Science and Technology: [DOI: 10.110
 ```
 A. Demion, L. L. Stöckli, N. Thomas and S. Zahno, "Frequency-Dependent Deconvolution for Enhanced THz-TDS Scans: Accounting for Beam Width Variations in Time Traces," in IEEE Transactions on Terahertz Science and Technology, vol. 15, no. 3, pp. 505-513, May 2025, doi: 10.1109/TTHZ.2025.3546756.
 keywords: {Frequency measurement;Time-frequency analysis;Imaging;Fourier transforms;Finite impulse response filters;Deconvolution;Time-domain analysis;Terahertz radiation;Antenna measurements;Spatial resolution;Deconvolution;knife edge technique;Richardson–Lucy (RL);Terahertz time-domain spectroscopy (THz-TDS);Wiener},
-
 ```
 
 ## Overview
@@ -86,13 +85,13 @@ DeconvolutionFilter = Deconvolution(
 Then deconvole the scan ($n_x \times n_y \times n_t$ data):
 
 ```python
-    deconvolved_traces = DeconvolutionFilter.apply_deconvolution(scan, x_min, x_max, nx, y_min, y_max, ny, max_iter=100)
+deconvolved_traces = DeconvolutionFilter.apply_deconvolution(scan, x_min, x_max, nx, y_min, y_max, ny, max_iter=100)
 ```
 
 or deconvole a single waveform:
 
 ```python
-    deconvolved_trace = DeconvolutionFilter.apply_deconvolution_single_trace(trace, max_iter=100)
+deconvolved_trace = DeconvolutionFilter.apply_deconvolution_single_trace(trace, max_iter=100)
 ```
 
 ## Dependencies
