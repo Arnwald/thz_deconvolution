@@ -1,7 +1,7 @@
 # THz Deconvolution Library
-[![PEP8](https://github.com/dotTHzTAG/pydotthz/actions/workflows/format.yml/badge.svg)](https://github.com/Arnwald/thz_deconvolution/actions/workflows/format.yml)
-[![PyPI](https://img.shields.io/pypi/v/pydotthz?label=pypi%20package)](https://pypi.org/project/thz_deconvolution/)
-[![PyPI - Downloads](https://img.shields.io/pypi/dm/pydotthz)](https://pypi.org/project/thz_deconvolution/)
+[![PEP8](https://github.com/Arnwald/thz_deconvolution/actions/workflows/format.yml/badge.svg)](https://github.com/Arnwald/thz_deconvolution/actions/workflows/format.yml)
+[![PyPI](https://img.shields.io/pypi/v/thz_deconvolution?label=pypi%20package)](https://pypi.org/project/thz_deconvolution/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/thz_deconvolution)](https://pypi.org/project/thz_deconvolution/)
 
 The THz Deconvolution Library is a Python package designed for advanced signal processing in THz time-domain spectroscopy (THz-TDS). This library provides tools to analyze and process THz signals, with a focus on beam profiling and deconvolution techniques to address frequency-dependent beam spreading effects.
 
