@@ -1,6 +1,5 @@
 cff-version: 1.2.0
 message: "If you use this repository, please cite the following article."
-title: "Frequency-Dependent Deconvolution for Enhanced THz-TDS Scans: Accounting for Beam Width Variations in Time Traces"
 authors:
   - family-names: Demion
     given-names: Arnaud
@@ -10,7 +9,7 @@ authors:
     given-names: Nicolas
   - family-names: Zahno
     given-names: Silvan
+title: "Frequency-Dependent Deconvolution for Enhanced THz-TDS Scans: Accounting for Beam Width Variations in Time Traces"
 date-released: 2025
-type: article
 doi: 10.1109/TTHZ.2025.3546756
 version: 1.0.4
