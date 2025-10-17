@@ -1,10 +1,13 @@
 from pathlib import Path
 from typing import Optional
+import hashlib
+import tempfile
+import pickle
 
 from matplotlib import pyplot as plt
 from pydotthz import DotthzFile
 from thz_deconvolution import richardson_lucy_freq, load_knife_edge_meas, fit_mean_beam, fit_beam_widths, create_psf_2d, \
-    create_filters, gaussian
+    create_filters, gaussian, richardson_lucy_single_pulse
 import numpy as np
 
 
@@ -19,7 +22,10 @@ class Deconvolution:
                  win_width=0.5,
                  n_filters=20,
                  w_max=30,
-                 show_plot=False):
+                 show_plot=False,
+                 npz_path_to_save: Optional[Path] = None):
+
+        start_freq = max(start_freq, low_cut)
 
         if knife_edge_x_path is None and knife_edge_y_path is None:
             if psf_path is None:
@@ -121,9 +127,95 @@ class Deconvolution:
                 '[y_0, w_y]': self.popt_ys  # ndarray: fitted y parameters, shape (n_filters, 2)
             }
 
-            np.savez(Path("psf_data/psf_new.npz"), **data)
+            if npz_path_to_save is not None:
+                np.savez(npz_path_to_save, **data)
+            else:
+                np.savez(knife_edge_x_path.parent.with_name("psf_new").with_suffix(".npz"), **data)
+
+        # Store configuration parameters
+        self._config = {
+            'low_cut': low_cut,
+            'high_cut': high_cut,
+            'start_freq': start_freq,
+            'end_freq': end_freq,
+            'win_width': win_width,
+            'n_filters': n_filters,
+            'w_max': w_max,
+            'knife_edge_x_path': str(knife_edge_x_path) if knife_edge_x_path else None,
+            'knife_edge_y_path': str(knife_edge_y_path) if knife_edge_y_path else None,
+            'psf_path': str(psf_path) if psf_path else None
+        }
+
+    def _create_config_hash(self, scan_params):
+        """Create a hash from configuration and scan parameters."""
+        combined_config = {**self._config, **scan_params}
+        # Convert to string for consistent hashing
+        config_str = str(sorted(combined_config.items()))
+        return hashlib.md5(config_str.encode()).hexdigest()
+
+    def _get_cache_path(self, config_hash):
+        """Get the cache file path for a given configuration hash."""
+        temp_dir = Path(tempfile.gettempdir()) / "thz_deconvolution_cache"
+        temp_dir.mkdir(exist_ok=True)
+        return temp_dir / f"deconv_{config_hash}.pkl"
+
+    def _save_cached_result(self, config_hash, deconvolved_traces):
+        """Save deconvolved traces to cache."""
+        cache_path = self._get_cache_path(config_hash)
+        with open(cache_path, 'wb') as f:
+            pickle.dump(deconvolved_traces, f)
+
+    def _load_cached_result(self, config_hash):
+        """Load deconvolved traces from cache if available."""
+        cache_path = self._get_cache_path(config_hash)
+        if cache_path.exists():
+            try:
+                with open(cache_path, 'rb') as f:
+                    return pickle.load(f)
+            except (pickle.PickleError, IOError):
+                # If loading fails, remove corrupted cache file
+                cache_path.unlink(missing_ok=True)
+        return None
+
+    def clear_cache(self):
+        """Clear all cached deconvolution results."""
+        temp_dir = Path(tempfile.gettempdir()) / "thz_deconvolution_cache"
+        if temp_dir.exists():
+            for cache_file in temp_dir.glob("deconv_*.pkl"):
+                cache_file.unlink()
+
+    def clear_old_cache(self, days=7):
+        """Clear cached results older than specified days."""
+        import time
+        temp_dir = Path(tempfile.gettempdir()) / "thz_deconvolution_cache"
+        if temp_dir.exists():
+            cutoff_time = time.time() - (days * 24 * 3600)
+            for cache_file in temp_dir.glob("deconv_*.pkl"):
+                if cache_file.stat().st_mtime < cutoff_time:
+                    cache_file.unlink()
 
     def apply_deconvolution(self, scan, x_min, x_max, nx, y_min, y_max, ny, max_iter=500):
+        # Create scan parameters for hashing
+        scan_params = {
+            'scan_shape': scan.shape,
+            'x_min': x_min,
+            'x_max': x_max,
+            'nx': nx,
+            'y_min': y_min,
+            'y_max': y_max,
+            'ny': ny,
+            'max_iter': max_iter
+        }
+
+        # Create configuration hash
+        config_hash = self._create_config_hash(scan_params)
+
+        # Check if cached result exists
+        cached_result = self._load_cached_result(config_hash)
+        if cached_result is not None:
+            print(f"Loading cached deconvolution result (hash: {config_hash[:8]}...)")
+            return cached_result
+
         # Initialize the maximum number of iterations for Richardson-Lucy deconvolution
         meas_type = 'reflectance'  # or meas_type == 'transmission', to mirror the PSF
         # Perform Richardson-Lucy deconvolution in the frequency domain
@@ -131,20 +223,56 @@ class Deconvolution:
         xx = np.linspace(x_min, x_max, nx)
         yy = np.linspace(y_min, y_max, ny)
 
+        print("")
+        print(f"Computing deconvolution (hash: {config_hash[:8]}...)")
         deconvolved_traces = richardson_lucy_freq(scan, xx, yy, self.popt_xs, self.popt_ys, self.filters,
                                                   self.filt_freqs, max_iter,
                                                   scan_type=meas_type)
+
+        # Save result to cache
+        self._save_cached_result(config_hash, deconvolved_traces)
+
         return deconvolved_traces
+
+    def apply_single_pulse_deconvolution(self, pulse, max_iter=500):
+        """
+        Apply deconvolution to a single pulse.
+
+        Parameters
+        ----------
+        pulse : ndarray
+            Single pulse trace to be deconvolved.
+        x_pos : float
+            X position of the pulse.
+        y_pos : float
+            Y position of the pulse.
+        max_iter : int, optional
+            Maximum number of iterations. Default is 500.
+
+        Returns
+        -------
+        ndarray
+            Deconvolved pulse trace.
+        """
+        meas_type = 'reflectance'  # or 'transmission'
+
+        return richardson_lucy_single_pulse(
+            pulse,
+            self.popt_xs, self.popt_ys,
+            self.filters, self.filt_freqs,
+            max_iter, meas_type
+        )
+
 
 if __name__ == "__main__":
     Decon = Deconvolution(
-        knife_edge_x_path=Path("psf_data/example_beam_width/measurement_x/data/1750085285.8557956_data.thz"),
-        knife_edge_y_path=Path("psf_data/example_beam_width/measurement_y/data/1750163177.929295_data.thz")
+        knife_edge_x_path=Path("../psf_data/example_beam_width/measurement_x/1750085285.8557956_data.thz"),
+        knife_edge_y_path=Path("../psf_data/example_beam_width/measurement_y/1750163177.929295_data.thz")
     )
 
-    # Decon = Deconvolution(psf_path=Path("psf_data/psf.npz"))
+    # Decon = Deconvolution(psf_path=Path("../psf_data/example_beam_width/psf.npz"))
 
-    with DotthzFile(Path("sample_data/resolution_target_sample.thzimg")) as psf_data:
+    with DotthzFile(Path("../sample_data/resolution_target_sample.thzimg")) as psf_data:
         key = list(psf_data.keys())[0]
         dx = float(psf_data[key].metadata['dx [mm]'])
         dy = float(psf_data[key].metadata['dy [mm]'])

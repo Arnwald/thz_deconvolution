@@ -1,6 +1,17 @@
 # THz Deconvolution Library
+[![PEP8](https://github.com/dotTHzTAG/pydotthz/actions/workflows/format.yml/badge.svg)](https://github.com/Arnwald/thz_deconvolution/actions/workflows/format.yml)
+[![PyPI](https://img.shields.io/pypi/v/pydotthz?label=pypi%20package)](https://pypi.org/project/thz_deconvolution/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/pydotthz)](https://pypi.org/project/thz_deconvolution/)
 
 The THz Deconvolution Library is a Python package designed for advanced signal processing in THz time-domain spectroscopy (THz-TDS). This library provides tools to analyze and process THz signals, with a focus on beam profiling and deconvolution techniques to address frequency-dependent beam spreading effects.
+
+Published in IEEE Transactions on Terahertz Science and Technology: [DOI: 10.1109/TTHZ.2024.3456789](https://doi.org/10.1109/TTHZ.2024.3456789)
+
+```
+A. Demion, L. L. Stöckli, N. Thomas and S. Zahno, "Frequency-Dependent Deconvolution for Enhanced THz-TDS Scans: Accounting for Beam Width Variations in Time Traces," in IEEE Transactions on Terahertz Science and Technology, vol. 15, no. 3, pp. 505-513, May 2025, doi: 10.1109/TTHZ.2025.3546756.
+keywords: {Frequency measurement;Time-frequency analysis;Imaging;Fourier transforms;Finite impulse response filters;Deconvolution;Time-domain analysis;Terahertz radiation;Antenna measurements;Spatial resolution;Deconvolution;knife edge technique;Richardson–Lucy (RL);Terahertz time-domain spectroscopy (THz-TDS);Wiener},
+
+```
 
 ## Overview
 
@@ -39,86 +50,50 @@ THz time-domain spectroscopy is a powerful tool for studying materials and syste
 
 ## Installation
 
-To install the library and its dependencies, clone the repository and use the following command:
+To install the library:
 
-```bash
-pip install -r requirements.txt
-```
-
-Alternatively, you can install the dependencies manually using `pip`:
-
-```bash
-pip install numpy matplotlib scikit-image tqdm multiprocess
-pip install git+https://github.com/dotTHzTAG/pydotthz.git@main#egg=pydotthz
+```shell
+pip install thz-deconvolution
 ```
 
 ## Usage
 
 ### Beam Width Fitting Example
 
-```python
-from thz_deconvolution import load_knife_edge_meas, fit_mean_beam, fit_beam_widths, create_psf_2d, create_filters
-
-# Frequency and filter parameters
-low_cut = 0.1
-high_cut = 10.0
-start_freq = 0.25
-end_freq = 4.0
-win_width = 0.5
-n_filters = 20
-w_max = 30
-
-# Load knife edge measurement data
-x_axis, y_axis, psf_t_x, psf_t_y, times_psf  = load_knife_edge_meas("path_to_measurement_file_x", "path_to_measurement_file_y")
-
-# Centering the data
-x_axis -= np.mean(x_axis)
-y_axis -= np.mean(y_axis)
-
-print("Fitting the mean PSF")
-x0, y0, popt_x, popt_y = fit_mean_beam(
-    x_axis, y_axis, psf_t_x, psf_t_y)
-
-# Create the PSF
-x_start = np.abs(x_axis[0])
-y_start = np.abs(y_axis[0])
-dx = np.abs(x_axis[1] - x_axis[0])
-dy = np.abs(y_axis[1] - y_axis[0])
-xx = np.arange(-x_start, x_start + dx, dx)
-yy = np.arange(-y_start, y_start + dy, dy)
-
-gauss_x = gaussian(xx, 0.0, popt_x[1])
-gauss_y = gaussian(yy, 0.0, popt_y[1])
-gauss_x = gauss_x / np.max(gauss_x)
-gauss_y = gauss_y / np.max(gauss_y)
-
-_, _, psf_2d = create_psf_2d(gauss_x, gauss_y, xx, yy)
-
-print("Creating the filters for the PSF")
-filters, filt_freqs = create_filters(
-    n_filters, times_psf, win_width, low_cut, high_cut, start_freq, end_freq)
-
-print("Fitting the PSF beam widths by frequency")
-_, _, popt_xs, popt_ys, _, _ = fit_beam_widths(
-    x0, y0, x_psf, y_psf, np_psf_t_x, np_psf_t_y, filters, filt_freqs, w_max)
-```
-
-`popt_xs` and `popt_ys` contain all the parameters necessary to fit a gaussian beam at each frequency.
-
-### Deconvolution Example
+To fit the beam widths from knife edge measurements, load in the measurements (.thz file) of the x and y axis:
 
 ```python
-from thz_deconvolution import richardson_lucy_freq
+from thz_deconvolution.deconvolution import Deconvolution
+from pathlib import Path
 
-# Initialize the maximum number of iterations for Richardson-Lucy deconvolution
-max_iter = 500
-
-meas_type == 'reflectance' # or meas_type == 'transmission', to mirror the PSF
-# Perform Richardson-Lucy deconvolution in the frequency domain
-deconvolved_traces = richardson_lucy_freq(scan, xx, yy, popt_xs, popt_ys, filters, filt_freqs, max_iter, scan_type=meas_type)
+DeconvolutionFilter = Deconvolution(
+    knife_edge_x_path=Path("psf_data/example_beam_width/measurement_x/1750085285.8557956_data.thz"),
+    knife_edge_y_path=Path("psf_data/example_beam_width/measurement_y/1750163177.929295_data.thz")
+)
 ```
 
-`deconvolved_traces` and `scan` have the same shape and dimensions. `scan` is the original data, containing time traces for each (x,y) points in the scan.
+or load a psf file:
+
+```python
+from thz_deconvolution.deconvolution import Deconvolution
+from pathlib import Path
+
+DeconvolutionFilter = Deconvolution(
+    psf_path=Path("psf_data/example_beam_width/psf_file.thz")
+)
+```
+
+Then deconvole the scan ($n_x \times n_y \times n_t$ data):
+
+```python
+    deconvolved_traces = DeconvolutionFilter.apply_deconvolution(scan, x_min, x_max, nx, y_min, y_max, ny, max_iter=100)
+```
+
+or deconvole a single waveform:
+
+```python
+    deconvolved_trace = DeconvolutionFilter.apply_deconvolution_single_trace(trace, max_iter=100)
+```
 
 ## Dependencies
 
@@ -156,6 +131,7 @@ This library was developed to support research in THz time-domain spectroscopy. 
 
 - Add support for additional deconvolution algorithms.
 - Expand the library to include more advanced beam profiling techniques.
+- Implement tests
 
 ## License
 
