@@ -116,7 +116,7 @@ Ensure all dependencies are installed by running the provided `requirements.txt`
 Contributions are welcome! If you have ideas for new features, improvements, or bug fixes, feel free to:
 
 1. Open an issue to discuss your ideas.
-2. Submit a pull request with your changes.
+2. Submit a pull request with your changes, make sure to add them to the [Changelog](CHANGELOG.md).
 
 Please ensure your code adheres to the project's coding standards and includes appropriate tests.
 
@@ -138,4 +138,4 @@ This library was developed to support research in THz time-domain spectroscopy. 
 
 ## License
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
