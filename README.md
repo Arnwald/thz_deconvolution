@@ -57,6 +57,8 @@ pip install thz-deconvolution
 
 ## Usage
 
+A simple example is located in the [examples](examples) directory.
+
 ### Beam Width Fitting Example
 
 To fit the beam widths from knife edge measurements, load in the measurements (.thz file) of the x and y axis:
@@ -81,6 +83,8 @@ DeconvolutionFilter = Deconvolution(
     psf_path=Path("psf_data/example_beam_width/psf_file.thz")
 )
 ```
+
+### Deconvolution Example
 
 Then deconvole the scan ($n_x \times n_y \times n_t$ data):
 
