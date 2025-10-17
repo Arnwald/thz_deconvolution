@@ -195,8 +195,11 @@ class Deconvolution:
                     cache_file.unlink()
 
     def apply_deconvolution(self, scan, x_min, x_max, nx, y_min, y_max, ny, max_iter=500):
+        scan_hash = hashlib.md5(scan.tobytes()).hexdigest()
+
         # Create scan parameters for hashing
         scan_params = {
+            'scan_hash': scan_hash,
             'scan_shape': scan.shape,
             'x_min': x_min,
             'x_max': x_max,
