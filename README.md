@@ -5,7 +5,7 @@
 
 The THz Deconvolution Library is a Python package designed for advanced signal processing in THz time-domain spectroscopy (THz-TDS). This library provides tools to analyze and process THz signals, with a focus on beam profiling and deconvolution techniques to address frequency-dependent beam spreading effects.
 
-Published in IEEE Transactions on Terahertz Science and Technology: [DOI: 10.1109/TTHZ.2024.3456789](https://doi.org/10.1109/TTHZ.2024.3456789)
+Published in IEEE Transactions on Terahertz Science and Technology: [DOI: 10.1109/TTHZ.2024.3456789](https://doi.org/10.1109/TTHZ.2025.3546756)
 
 ```
 A. Demion, L. L. Stöckli, N. Thomas and S. Zahno, "Frequency-Dependent Deconvolution for Enhanced THz-TDS Scans: Accounting for Beam Width Variations in Time Traces," in IEEE Transactions on Terahertz Science and Technology, vol. 15, no. 3, pp. 505-513, May 2025, doi: 10.1109/TTHZ.2025.3546756.
