@@ -13,22 +13,4 @@ authors:
 date-released: 2025
 type: article
 doi: 10.1109/TTHZ.2025.3546756
-journal: "IEEE Transactions on Terahertz Science and Technology"
-volume: 15
-issue: 3
-pages: "505-513"
-keywords:
-  - Frequency measurement
-  - Time-frequency analysis
-  - Imaging
-  - Fourier transforms
-  - Finite impulse response filters
-  - Deconvolution
-  - Time-domain analysis
-  - Terahertz radiation
-  - Antenna measurements
-  - Spatial resolution
-  - Knife edge technique
-  - Richardson–Lucy
-  - Terahertz time-domain spectroscopy (THz-TDS)
-  - Wiener
+version: 1.0.4
