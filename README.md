@@ -59,6 +59,8 @@ pip install thz-deconvolution
 
 A simple example is located in the [examples](examples) directory.
 
+> **Note**: The example data under `psf_data/` and `sample_data/` is tracked with [Git LFS](https://git-lfs.com/). If you clone this repository to run the examples, install Git LFS first (`git lfs install`) and run `git lfs pull` to fetch the actual files — otherwise you'll get small text pointer files instead of the real `.thz`/`.thzimg`/`.npz` data, causing errors like `OSError: Unable to synchronously open file (file signature not found)`.
+
 ### Beam Width Fitting Example
 
 To fit the beam widths from knife edge measurements, load in the measurements (.thz file) of the x and y axis:
