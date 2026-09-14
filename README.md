@@ -75,7 +75,12 @@ DeconvolutionFilter = Deconvolution(
 )
 ```
 
-or load a pre-computed PSF (`.npz` file, as saved by the constructor above):
+> **Note**: As of v2.0, PSF `.npz` files use a continuous model (physical fit + spline correction) instead of a
+> discrete per-filter one, matching the "PSF Tool" in [thz-image-explorer](https://github.com/unibe-icelab/thz-image-explorer).
+> Files are interchangeable with that tool in both directions. PSF files produced by v1.x are **not** compatible —
+> regenerate them from the knife-edge measurements, or keep using `thz_deconvolution==1.1.1`.
+
+or load a pre-computed PSF (`.npz` file, as saved by the constructor above, or exported from thz-image-explorer's PSF Tool):
 
 ```python
 from thz_deconvolution.deconvolution import Deconvolution
