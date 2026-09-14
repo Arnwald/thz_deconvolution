@@ -5,7 +5,7 @@
 
 The THz Deconvolution Library is a Python package designed for advanced signal processing in THz time-domain spectroscopy (THz-TDS). This library provides tools to analyze and process THz signals, with a focus on beam profiling and deconvolution techniques to address frequency-dependent beam spreading effects.
 
-Published in IEEE Transactions on Terahertz Science and Technology: [DOI: 10.1109/TTHZ.2024.3456789](https://doi.org/10.1109/TTHZ.2025.3546756)
+Published in IEEE Transactions on Terahertz Science and Technology: [DOI: 10.1109/TTHZ.2025.3546756](https://doi.org/10.1109/TTHZ.2025.3546756)
 
 ```
 A. Demion, L. L. Stöckli, N. Thomas and S. Zahno, "Frequency-Dependent Deconvolution for Enhanced THz-TDS Scans: Accounting for Beam Width Variations in Time Traces," in IEEE Transactions on Terahertz Science and Technology, vol. 15, no. 3, pp. 505-513, May 2025, doi: 10.1109/TTHZ.2025.3546756.
@@ -75,14 +75,14 @@ DeconvolutionFilter = Deconvolution(
 )
 ```
 
-or load a psf file:
+or load a pre-computed PSF (`.npz` file, as saved by the constructor above):
 
 ```python
 from thz_deconvolution.deconvolution import Deconvolution
 from pathlib import Path
 
 DeconvolutionFilter = Deconvolution(
-    psf_path=Path("psf_data/example_beam_width/psf_file.thz")
+    psf_path=Path("psf_data/example_beam_width/psf.npz")
 )
 ```
 
@@ -97,7 +97,7 @@ deconvolved_traces = DeconvolutionFilter.apply_deconvolution(scan, x_min, x_max,
 or deconvole a single waveform:
 
 ```python
-deconvolved_trace = DeconvolutionFilter.apply_deconvolution_single_trace(trace, max_iter=100)
+deconvolved_trace = DeconvolutionFilter.apply_single_pulse_deconvolution(trace, max_iter=100)
 ```
 
 ## Dependencies
@@ -105,6 +105,7 @@ deconvolved_trace = DeconvolutionFilter.apply_deconvolution_single_trace(trace, 
 This library relies on the following Python packages:
 
 - `numpy`: For numerical computations.
+- `scipy`: For signal processing (filtering, FFTs, curve fitting).
 - `matplotlib`: For data visualization.
 - `scikit-image`: For image and signal processing.
 - `tqdm`: For progress bars in iterative algorithms.
