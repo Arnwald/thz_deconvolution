@@ -33,12 +33,20 @@ if __name__ == "__main__":
         traces = np.array(datasets["dataset"])
 
     plt.imshow(np.sum(traces ** 2, axis=2), cmap='gray')
+    plt.title("Raw scan (summed pulse energy)")
+    plt.xlabel("y index")
+    plt.ylabel("x index")
+    plt.colorbar(label="Summed intensity [a.u.]")
     plt.show()
 
     deconvolved_traces = DeconvolutionFilter.apply_deconvolution(traces, x_min, x_max, nx, y_min, y_max, ny,
                                                                  max_iter=100)
 
     plt.imshow(np.sum(deconvolved_traces ** 2, axis=2), cmap='gray')
+    plt.title("Deconvolved scan (summed pulse energy)")
+    plt.xlabel("y index")
+    plt.ylabel("x index")
+    plt.colorbar(label="Summed intensity [a.u.]")
     plt.show()
 
     raw_pulse = traces[nx // 2, ny // 2, :]
@@ -46,4 +54,8 @@ if __name__ == "__main__":
 
     plt.plot(times, raw_pulse)
     plt.plot(times, deconvolved_trace)
+    plt.title("Single-pulse deconvolution")
+    plt.xlabel("Time [ps]")
+    plt.ylabel("Amplitude [a.u.]")
+    plt.legend(["Raw pulse", "Deconvolved pulse"])
     plt.show()
